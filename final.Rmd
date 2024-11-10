@@ -1,0 +1,521 @@
+---
+title: "Project Number 1 - Group Six"
+author: "Jett Badalament-Tirrell, Angie Yoon, Nakisha Fouch & Shawn Gmurek"
+date: "2024-10-06"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Project 1 - Diamond Characteristics Relative to Price
+
+**by Group 6: Jett Badalament-Tirrell, Angie Yoon, Nakisha Fouch & Shawn Gmurek**
+
+## Data Cleaning:
+
+```{r DataCleaning}
+library(tidyverse)
+library(readr)
+
+#NTF_Path="C:\\Users\\jettb\\Stats6021Proj1\\diamonds4.csv"
+NTF_Path="/Users/angieyoon/STAT6021Project1/diamonds4.csv"
+
+Diamonds = read.csv(NTF_Path)
+#urlfile="https://raw.githubusercontent.com/dnb7rz/Stats6021Proj1/refs/heads/main/diamonds4.csv?token=GHSAT0AAAAAACWY3I7PXPWLDBOJ62ZENWSSZYHAHXA"
+#Diamonds = read.csv(url(urlfile))
+head(Diamonds)
+nrow(Diamonds) #1214
+
+Diamonds %>% count(is.na(carat)) #no missing
+min(Diamonds$carat, na.rm = T) #0.23
+max(Diamonds$carat, na.rm = T) #7.09
+
+Diamonds %>% count(is.na(cut)) #no missing
+sort(unique(Diamonds$cut)) #"Astor Ideal", "Good","Ideal","Very Good"  
+
+Diamonds %>% count(is.na(clarity)) #no missing
+sort(unique(Diamonds$clarity)) #"FL"   "IF"   "SI1"  "SI2"  "VS1"  "VS2"  "VVS1" "VVS2"
+
+Diamonds %>% count(is.na(color)) #no missing
+sort(unique(Diamonds$color)) #"D" "E" "F" "G" "H" "I" "J" (no "K")
+
+Diamonds %>% count(is.na(price)) #no missing
+min(Diamonds$price, na.rm = T) #322
+max(Diamonds$price, na.rm = T) #355403
+
+Diamonds %>% filter(price == min(price))
+Diamonds %>% filter(price == max(price))
+
+
+```
+
+```{r DF_ForStats}
+
+Dmnds_DF = as.data.frame(Diamonds)
+
+Dmnds_DF$price = as.numeric(Dmnds_DF$price)
+Dmnds_DF$carat = as.numeric(Dmnds_DF$carat)
+Dmnds_DF$cut = as.character(Dmnds_DF$cut)
+Dmnds_DF$color = as.character(Dmnds_DF$color)
+Dmnds_DF$clarity = as.character(Dmnds_DF$clarity)
+
+summary(Dmnds_DF)
+head(Dmnds_DF)
+
+
+```
+
+## Visualions
+
+Non-Transformed Single Variable Visualizations:
+
+```{r}
+ggplot(data = Dmnds_DF, aes(x=carat,y=price)) +
+  geom_point(alpha = 0.4) +
+  labs(title = "Price vs. Carat", x = "Carat", y = "Price")
+
+ggplot(Dmnds_DF, aes(x = clarity, y = price)) +
+  geom_boxplot() +
+  labs(title = "Price by Clarity", x = "Clarity", y = "Price")
+
+ggplot(Dmnds_DF, aes(x = color, y = price)) +
+  geom_boxplot() +
+  labs(title = "Price by Color", x = "Color", y = "Price")
+
+ggplot(Dmnds_DF, aes(x = cut, y = price)) +
+  geom_boxplot() +
+  labs(title = "Price by Cut", x = "Cut", y = "Price")
+
+```
+
+Transformed Single Variable Visualizations:
+
+```{r}
+ggplot(Dmnds_DF, aes(x = log(carat), y = log(price))) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "lm", se = FALSE, color = "skyblue") +
+  labs(title = "Log(Price) vs. Log(Carat)", x = "Log(Carat)", y = "Log(Price)")
+
+Dmnds_DF$clarity <- factor(Dmnds_DF$clarity, levels = c("SI2", "SI1", "VS2", "VS1", "VVS2", "VVS1", "IF", "FL"))
+Dmnds_DF$color <- factor(Dmnds_DF$color, levels = c("J", "I", "H", "G", "F", "E", "D"))
+Dmnds_DF$cut <- factor(Dmnds_DF$cut, levels = c("Good", "Very Good", "Ideal", "Astor Ideal"))
+
+ggplot(Dmnds_DF, aes(x = clarity, y = price)) +
+  geom_boxplot() +
+  scale_y_log10() +
+  labs(title = "Price by Clarity (Log Scale)", x = "Clarity", y = "Log(Price)")
+
+ggplot(Dmnds_DF, aes(x = color, y = price)) +
+  geom_boxplot() +
+  scale_y_log10() +
+  labs(title = "Price by Color (Log Scale)", x = "Color", y = "Log(Price)")
+
+ggplot(Dmnds_DF, aes(x = cut, y = price)) +
+  geom_boxplot() +
+  scale_y_log10() +
+  labs(title = "Price by Cut (Log Scale)", x = "Cut", y = "Log(Price)")
+```
+
+log transformed visualizations when carat range is 0.5 to 2.0:
+
+```{r}
+library(dplyr)
+filtered_Dmnds_DF <- Dmnds_DF %>%
+  filter(carat >= 0.5 & carat <= 2.0)
+
+ggplot(filtered_Dmnds_DF, aes(x = clarity, y = price)) +
+  geom_boxplot() +
+  scale_y_log10() +
+  labs(title = "Price by Clarity (Carat 0.5 to 2.0, Log Scale)", x = "Clarity", y = "Log(Price)")
+
+ggplot(filtered_Dmnds_DF, aes(x = color, y = price)) +
+  geom_boxplot() +
+  scale_y_log10() +
+  labs(title = "Price by Color (Carat 0.5 to 2.0, Log Scale)", x = "Color", y = "Log(Price)")
+
+ggplot(filtered_Dmnds_DF, aes(x = cut, y = price)) +
+  geom_boxplot() +
+  scale_y_log10() +
+  labs(title = "Price by Cut (Carat 0.5 to 2.0, Log Scale)", x = "Cut", y = "Log(Price)")
+
+```
+
+```{r}
+library(dplyr)
+filtered_Dmnds_DF <- Dmnds_DF %>%
+  filter(carat >= 2.0 & carat <= 7)
+
+ggplot(filtered_Dmnds_DF, aes(x = clarity, y = price)) +
+  geom_boxplot() +
+  scale_y_log10() +
+  labs(title = "Price by Clarity (Carat 2.0 to 7.0, Log Scale)", x = "Clarity", y = "Log(Price)")
+
+ggplot(filtered_Dmnds_DF, aes(x = color, y = price)) +
+  geom_boxplot() +
+  scale_y_log10() +
+  labs(title = "Price by Color (Carat 2.0 to 7.0, Log Scale)", x = "Color", y = "Log(Price)")
+
+ggplot(filtered_Dmnds_DF, aes(x = cut, y = price)) +
+  geom_boxplot() +
+  scale_y_log10() +
+  labs(title = "Price by Cut (Carat 2.0 to 7.0, Log Scale)", x = "Cut", y = "Log(Price)")
+
+
+```
+
+Multivariable Heat maps:
+
+```{r}
+heatmap_data <- Dmnds_DF %>%
+  group_by(clarity, color) %>%
+  summarize(median_price = median(price))
+
+ggplot(heatmap_data, aes(x = clarity, y = color, fill = median_price)) +
+  geom_tile() +
+  scale_fill_viridis_c(option = "magma", trans = "log") +
+  labs(title = "Median Price by Clarity and Color", x = "Clarity", y = "Color", fill = "Median Price")
+
+heatmap_data <- Dmnds_DF %>%
+  group_by(clarity, color) %>%
+  summarize(mean_price = mean(price))
+
+ggplot(heatmap_data, aes(x = clarity, y = color, fill = mean_price)) +
+  geom_tile() +
+  scale_fill_viridis_c(option = "magma", trans = "log") +
+  labs(title = "Mean Price by Clarity and Color", x = "Clarity", y = "Color", fill = "Mean Price")
+
+heatmap_cut_clarity <- Dmnds_DF %>%
+  group_by(cut, clarity) %>%
+  summarize(median_price = median(price))
+
+ggplot(heatmap_cut_clarity, aes(x = clarity, y = cut, fill = median_price)) +
+  geom_tile() +
+  scale_fill_viridis_c(option = "cividis", trans = "log") +
+  labs(title = "Median Price by Cut and Clarity", x = "Clarity", y = "Cut", fill = "Median Price")
+
+heatmap_cut_clarity <- Dmnds_DF %>%
+  group_by(cut, clarity) %>%
+  summarize(mean_price = mean(price))
+
+ggplot(heatmap_cut_clarity, aes(x = clarity, y = cut, fill = mean_price)) +
+  geom_tile() +
+  scale_fill_viridis_c(option = "cividis", trans = "log") +
+  labs(title = "Mean Price by Cut and Clarity", x = "Clarity", y = "Cut", fill = "Mean Price")
+
+heatmap_cut_color <- Dmnds_DF %>%
+  group_by(cut, color) %>%
+  summarize(median_price = median(price))
+
+ggplot(heatmap_cut_color, aes(x = color, y = cut, fill = median_price)) +
+  geom_tile() +
+  scale_fill_viridis_c(option = "cividis", trans = "log") +
+  labs(title = "Median Price by Cut and Color", x = "Color", y = "Cut", fill = "Median Price")
+
+heatmap_cut_color <- Dmnds_DF %>%
+  group_by(cut, color) %>%
+  summarize(mean_price = mean(price))
+
+ggplot(heatmap_cut_color, aes(x = color, y = cut, fill = mean_price)) +
+  geom_tile() +
+  scale_fill_viridis_c(option = "cividis", trans = "log") +
+  labs(title = "Mean Price by Cut and Color", x = "Color", y = "Cut", fill = "Mean Price")
+
+
+```
+
+Multivariable Heatmaps with carat buckets
+
+```{r}
+buckets_by_carat_df <- Dmnds_DF %>%
+  mutate(carat_bucket = cut(carat,
+                             breaks = c(-Inf, 0.5, 1.0, 1.5, 2.0, 3.0, Inf),
+                             labels = c("0-0.5", "0.5-1.0", "1.0-1.5", "1.5-2.0", "2.0-3.0", "3.0+"),
+                             right = FALSE))
+
+heatmap_clarity_carat <- buckets_by_carat_df %>%
+  group_by(clarity, carat_bucket) %>%
+  summarize(median_price = median(price, na.rm = TRUE), .groups = 'drop')
+
+ggplot(heatmap_clarity_carat, aes(x = carat_bucket, y = clarity, fill = median_price)) +
+  geom_tile() +
+  scale_fill_viridis_c(option = "inferno", trans = "log") +
+  labs(title = "Median Price by Clarity and Carat Buckets", x = "Carat Bucket", y = "Clarity", fill = "Median Price")
+
+heatmap_color_carat <- buckets_by_carat_df %>%
+  group_by(color, carat_bucket) %>%
+  summarize(median_price = median(price, na.rm = TRUE), .groups = 'drop')
+
+ggplot(heatmap_color_carat, aes(x = carat_bucket, y = color, fill = median_price)) +
+  geom_tile() +
+  scale_fill_viridis_c(option = "inferno", trans = "log") +
+  labs(title = "Median Price by Color and Carat Buckets", x = "Carat Bucket", y = "Color", fill = "Median Price")
+
+heatmap_cut_carat <- buckets_by_carat_df %>%
+  group_by(cut, carat_bucket) %>%
+  summarize(median_price = median(price, na.rm = TRUE), .groups = 'drop')
+
+ggplot(heatmap_cut_carat, aes(x = carat_bucket, y = cut, fill = median_price)) +
+  geom_tile() +
+  scale_fill_viridis_c(option = "inferno", trans = "log") +
+  labs(title = "Median Price by Cut and Carat Buckets", x = "Carat Bucket", y = "Cut", fill = "Median Price")
+
+ggplot(heatmap_cut_carat, aes(x = carat_bucket, y = cut, fill = median_price)) +
+  geom_tile() +
+  scale_fill_viridis_c(option = "turbo", trans = "log") +
+  labs(title = "Median Price by Cut and Carat Buckets", x = "Carat Bucket", y = "Cut", fill = "Median Price")
+```
+
+Price vs Clarity, Faceted by cut:
+```{r}
+ggplot(Dmnds_DF, aes(x = clarity, y = price)) +
+  geom_boxplot() +
+  scale_y_log10() +
+  facet_wrap(~ cut) +
+  labs(title = "Price vs Clarity, Faceted by Cut", x = "Clarity", y = "Log(Price)")
+```
+
+Price by Cut, Controlled by Carat Buckets
+```{r}
+Dmnds_DF2 <- Dmnds_DF %>%
+  mutate(carat_bucket = cut(carat,
+                             breaks = c(-Inf, 0.5, 1.0, 1.5, 2.0, 3.0, Inf),
+                             labels = c("0-0.5", "0.5-1.0", "1.0-1.5", "1.5-2.0", "2.0-3.0", "3.0+"),
+                             right = FALSE))
+
+
+ggplot(Dmnds_DF2, aes(x = cut, y = price)) +
+  geom_boxplot() +
+  scale_y_log10() + 
+  facet_wrap(~ carat_bucket) +  
+  labs(title = "Price by Cut, Controlled for Carat Buckets", x = "Cut", y = "Log(Price)")
+```
+
+Charts investigating Color by Cut
+```{r}
+ggplot(Dmnds_DF, aes(x = cut, fill = color)) +
+  geom_bar(position = "fill") +
+  labs(title = "Proportion of Diamond Colors by Cut",
+       x = "Diamond Cut", y = "Proportion of Diamonds") +
+  scale_fill_brewer(palette = "Set1")
+
+custom_colors <- c(
+  "D" = "#FFFFFF",    # White for the highest quality
+  "E" = "#fdf4e6",    # Light cream
+  "F" = "#fbf1c5",    # Very light yellow
+  "G" = "#f5e29f",    # Light yellow
+  "H" = "#f1d36d",    # Medium light yellow
+  "I" = "#e8c156",    # Lighter yellow
+  "J" = "#c79a00"     # Darker yellow for the lowest quality
+)
+
+ggplot(Dmnds_DF, aes(x = cut, fill = color)) +
+  geom_bar(position = "fill") +
+  labs(title = "Proportion of Diamond Colors by Cut",
+       x = "Diamond Cut", y = "Proportion of Diamonds") +
+  scale_fill_manual(values = custom_colors)
+
+color_counts <- Dmnds_DF %>%
+  group_by(cut, color) %>%
+  summarise(count = n()) %>%
+  ungroup()
+
+ggplot(color_counts, aes(x = color, y = count, fill = color)) +
+  geom_bar(stat = "identity") +
+  labs(title = "Number of Diamonds by Color, Faceted by Cut",
+       x = "Color Grade", y = "Number of Diamonds") +
+  scale_fill_brewer(palette = "Set1") +
+  facet_wrap(~cut)
+```
+
+Price vs Carat by Color:
+
+```{r}
+ggplot(data = Dmnds_DF, aes(x=carat, y=price,color = color)) +
+  geom_point()
+```
+
+Price vs. Carat by Cut:
+
+```{r}
+ggplot(data = Dmnds_DF, aes(x=carat, y=price,color = cut)) +
+  geom_point()
+```
+
+## Section 3
+
+### TITLE 1: Describing any transformation performed on the variables when fitting the SLR model, including reasons why these specific transformations were used.
+
+### TITLE 2: Checking SLR assumptions.
+
+1.  Create a scatter plot of the response variable(price) against the predictor variable(carat)
+
+```{r}
+#scatter plot, overlay regression line
+ggplot(Dmnds_DF, aes(x = carat, y = price)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "lm", se = FALSE, color = "skyblue") +
+  labs(title = "Price vs. Carat", x = "Carat", y = "Price") 
+```
+
+Assumption 1 is not met: the data points are not evenly scattered on both sides of the regression line as we move from left to right, which is non-linear. 
+
+
+Assumption 2 is not met: the vertical spread of the data points is not constant as we move from left to right.
+
+2.  Create Diagnostic plots.
+
+```{r}
+result<-lm(price~carat, data=Dmnds_DF)
+par(mfrow = c(2,2))
+plot(result)
+```
+
+From the residual plot (top left): the residuals are not evenly scattered across the horizontal axis, indicating a non-linear relationship between carat and price variable (Assumption 1 is not met). the variance of the residuals is not constant (Assumption 2 is not met).
+
+From the scale-location plot (bottom left): the variance of residuals is not constant. the line of variance is not horizontal(Assumption 2 is not met).
+
+Plan: since we discover that both Assumption 1 and 2 are not met, we try transforming the response variable to adjust the variance first, and then consider to transform the predictor variable based on the assessment. we will create the Box-Cox plot for specific value of lambda to use in transforming the response variable with y*=y^lambda.
+
+```{r}
+library(MASS)
+MASS::boxcox(result, lambda = seq(0.25,0.35,0.01))
+```
+
+
+
+In this Box-cox plot, lambda = 0 is excluded from the 95% confidence interval, however, this does not necessarily mean that log transformation will not improve our model since all the lambda values in 95% CI (0.295-0.310) is close to zero. So we will try two kinds of response variable transformation: log transformation and transformation with lambda=0.3 (0.3 is included in 95% CI in the Box-cox plot.). we will choose one of them after assessing scatter plots and residual plots of both transformation.
+
+
+
+4-1. Create a scatter plot after Log transformation of the response variable, price
+
+```{r}
+Dmnds_DF$log.price<-log(Dmnds_DF$price)
+ggplot(Dmnds_DF, aes(x = carat, y = log.price)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "lm", se = FALSE, color = "skyblue") +
+  labs(title = "Price(log) vs. Carat", x = "Carat", y = "Price(log)") 
+```
+
+
+4-2. Create Diagnostic plots after Log transformation of the response variable, price
+
+```{r}
+result2<-lm(log.price~carat, data=Dmnds_DF)
+par(mfrow=c(2,2))
+plot(result2)
+```
+
+
+
+
+
+5-1. Create a scatter plot after transformation with lambda=0.3 of the response variable, price
+
+```{r}
+lambda<-0.3
+Dmnds_DF$lambda.price<-log(Dmnds_DF$price^lambda)
+ggplot(Dmnds_DF, aes(x = carat, y = lambda.price)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "lm", se = FALSE, color = "skyblue") +
+  labs(title = "Transformed Price (lambda=0.3) vs. Carat", x = "Carat", y = "Transformed Price(lambda=0.3)") 
+```
+
+5-2. Create Dagnostic plots after tramsforming Price with lambda=0.3
+
+```{r}
+result3<-lm(lambda.price~carat, data=Dmnds_DF)
+par(mfrow=c(2,2))
+plot(result3)
+```
+
+
+Assessment:
+
+Assessment: From the scatter plots, residual plots and scale-location plots of both transformations, the variance is a lot more constant than prior to transformation. So assumption 2 is less of a concern.
+
+
+1. From scatter plots, residual plots of both transformations, the variance is a lot more constant than prior to response variable transformation. So Assumption 2 is less of a concern.
+
+
+2. the data points in the scatter plots in both transformations are not evenly scattered between the fitted line and the residuals in the residual plots in both transformations are not evenly scattered across the horizontal axis. Assumption 1 is not met
+
+Decision: We choose the log transformation of the response variable for the following two reasons.
+
+1. The transformation with lambda=0.3 does not show a significantly better performance in stabilizing the residual variance compared to log transformation according to the scatter plots and residual plots.
+
+2.  Log transformation is preferred since we can interpret coefficients.
+
+Next Plan: Now we focus on assumption 1 by transforming the predictor variable (carat). Based on the scatter plot, we will perform a log transformation to the predictor.
+
+
+
+
+6-1. Create a scatter plot after Log transformation of the response variable(price) and the predictor variable(carat)
+
+
+```{r}
+Dmnds_DF$log.carat<-log(Dmnds_DF$carat)
+ggplot(Dmnds_DF, aes(x = log.carat, y = log.price)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "lm", se = FALSE, color = "skyblue") +
+  labs(title = "Price(log) vs. Carat(log)", x = "Carat(log)", y = "Price(log)") 
+```
+
+Assessment: From the scatter plot of log transformed price against log transformed carat, the relationship appears to be linear(positive) with evenly distributed data points between the line. (Assumption 1 is met). The constant variance (Assumption 2) appears to be met because we do not see the variance increasing or decreasing.
+
+
+
+
+6-2. Create Diagnostic plots after Log transformation of the response variable(price) and the predictor variable (carat)
+
+```{r}
+result4<-lm(log.price~log.carat, data=Dmnds_DF)
+par(mfrow=c(2,2))
+plot(result4)
+```
+
+Assessment: we see significant improvements in the residual plot. The residuals are evenly scattered in general, on both side of the axis(Assumption 1 is met). The spread of the residuals is fairly constant as well (Assumption 2 is met).
+
+
+
+
+### TITLE 3. Providing contextual comments on how the SLR model inform us how price of diamonds are related to carat.
+
+dc### TITLE 3. Providing contextual comments on how the SLR model inform us how price of diamonds are related to carat.
+
+
+1.  Our Regression Equation
+
+##y^∗ = 8.5212 + 1.9440 x*, where y^*= log(price) and x* = log(carat)
+
+2.  Interpret the slope
+
+The coefficient 1.9440 on log(carat) tells us that for every 1% increase in the carat weight of a diamond, the price of the diamond increases by approximately 1.944%.
+
+Alternatively, we can say that for a 1% increase in carat, the price is multiplied by (1.01)\^1.944 = 1.019532.
+
+3.  Conclusion
+
+our SLR model tells us that there is a strong positive relationship between the price and carat of a diamond, which means that small percentage increases in carat leads to proportional increases in the price.
+
+```{r}
+summary(result4)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
